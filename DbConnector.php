@@ -1,5 +1,3 @@
-
-
 <?php
 /**
 	* Database Connection
@@ -7,7 +5,7 @@
 
     class DBConnector {
         private $host = 'localhost';
-        private $db = 'login';
+        private $db = 'serendip';
         private $user = 'root';
         private $pass = '';
         //private $charset = 'utf8mb4'; charset=$this->charset

@@ -20,14 +20,14 @@ class Mailer {
         $this->mail->isSMTP();
         $this->mail->Host       = 'smtp.gmail.com';
         $this->mail->SMTPAuth   = true;
-        $this->mail->Username   = 'madhan2001ana@gmail.com'; // SMTP email
-        $this->mail->Password   = 'ilergdrkkdycocoh'; // SMTP password
+        $this->mail->Username   = 'muralitharanabinath7@gmail.com'; // SMTP email
+        $this->mail->Password   = 'eyurrhcpuwuiprvx'; // SMTP password
         $this->mail->SMTPSecure = 'ssl';
         $this->mail->Port       = 465;
         //ilergdrkkdycocoh - madhan password
 
         
-        $this->mail->setFrom('madhan2001ana@gmail.com', 'QuickMatch');
+        $this->mail->setFrom('muralitharanabinath7@gmail.com', 'Serendip Waves');
     }
 
     // Set email subject and message
