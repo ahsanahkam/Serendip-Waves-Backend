@@ -38,7 +38,7 @@ if ($checkEmail->checkEmailExists($email)) {  // Change this function to only ch
         echo json_encode([
             "success" => true,
             "message" => "OTP sent to your email. Check your inbox.",
-            // "otp" => $otp  // better not to send OTP back in response for security reasons
+           //  "otp" => $otp  // better not to send OTP back in response for security reasons
         ]);
     } else {
         http_response_code(500);
@@ -48,3 +48,5 @@ if ($checkEmail->checkEmailExists($email)) {  // Change this function to only ch
     http_response_code(400);
     echo json_encode(["success" => false, "message" => "Email not registered."]);
 }
+
+

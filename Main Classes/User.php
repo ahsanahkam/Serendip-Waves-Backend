@@ -85,6 +85,69 @@ public function registerUser($full_name, $email, $password, $phone_number, $date
     }
 }
 
+public function login($email, $password)
+{
+    try {
+        $sql = "SELECT * FROM users WHERE email = :email";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($password, $user['password'])) {
+            unset($user['password']); // Don't send password to frontend
+            return [
+                "success" => true,
+                "message" => "Login successful",
+                "user" => [
+                    "id" => $user['id'],
+                    "full_name" => $user['full_name'],
+                    "email" => $user['email'],
+                    "role" => $user['role'],
+                    // Add other fields as needed
+                ],
+                "role" => $user['role']
+            ];
+        } else {
+            return [
+                "success" => false,
+                "message" => "Invalid email or password"
+            ];
+        }
+    } catch (PDOException $e) {
+        return [
+            "success" => false,
+            "message" => "Database error: " . $e->getMessage()
+        ];
+    }
+}
+
+public function forgotPassword($email, $password){
+    $this->email = $email;
+    $this->password = $password;
+    try {
+        $sql = "UPDATE users SET password = :password WHERE email = :email";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':password', $this->password);
+        $stmt->bindParam(':email', $this->email);
+        $stmt->execute();
+
+        error_log("Rows affected: " . $stmt->rowCount());
+
+        if ($stmt->rowCount() > 0) {
+            return true;
+        } else {
+            error_log("No rows updated - email may not exist or password unchanged");
+            return false;
+        }
+    } catch (PDOException $e) {
+        error_log("Password reset error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(["message" => "Failed to change password. " . $e->getMessage()]);
+        return false;
+    }
+}
+
 
 
     
