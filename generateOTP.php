@@ -1,5 +1,3 @@
-
-
 <?php
 
 header("Access-Control-Allow-Origin: *");
@@ -11,8 +9,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once './Main Classes/Customer.php';
-require_once './Main Classes/Mailer.php';
+require_once(__DIR__ . '/Main Classes/Customer.php');
+require_once(__DIR__ . '/Main Classes/Mailer.php');
+
 
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
@@ -38,7 +37,7 @@ if ($checkEmail->checkEmailExists($email)) {  // Change this function to only ch
         echo json_encode([
             "success" => true,
             "message" => "OTP sent to your email. Check your inbox.",
-           //  "otp" => $otp  // better not to send OTP back in response for security reasons
+            "otp" => $otp
         ]);
     } else {
         http_response_code(500);
@@ -48,5 +47,3 @@ if ($checkEmail->checkEmailExists($email)) {  // Change this function to only ch
     http_response_code(400);
     echo json_encode(["success" => false, "message" => "Email not registered."]);
 }
-
-
