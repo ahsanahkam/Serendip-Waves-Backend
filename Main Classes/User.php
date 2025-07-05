@@ -103,17 +103,23 @@ public function login($email, $password)
                     "id" => $user['id'],
                     "full_name" => $user['full_name'],
                     "email" => $user['email'],
-                    "role" => $user['role'],
-                    // Add other fields as needed
+                    "phone_number" => $user['phone_number'] ?? $user['phone'] ?? null,
+                    "date_of_birth" => $user['date_of_birth'] ?? $user['dob'] ?? null,
+                    "gender" => $user['gender'] ?? null,
+                    "passport_number" => $user['passport_number'] ?? $user['passport'] ?? null,
+                    "profile_image" => $user['profile_image'] ?? null,
+                    "created_at" => $user['created_at'] ?? null,
+                    "updated_at" => $user['updated_at'] ?? null,
+                    "role" => $user['role'] ?? null
                 ],
                 "role" => $user['role']
             ];
-        } else {
-            return [
-                "success" => false,
-                "message" => "Invalid email or password"
-            ];
         }
+        
+        return [
+            "success" => false,
+            "message" => "Invalid email or password"
+        ];
     } catch (PDOException $e) {
         return [
             "success" => false,
@@ -148,7 +154,72 @@ public function forgotPassword($email, $password){
     }
 }
 
+// Booking methods
+public function createBooking($user_id, $full_name, $email, $cruise_title, $cabin_type, $adults, $children, $booking_date, $departure_date, $return_date, $total_price, $special_requests = null) {
+    try {
+        // First check if bookings table exists, if not create it
+        $this->createBookingsTableIfNotExists();
+        
+        $total_guests = $adults + $children;
+        $cabin_number = 'CAB' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+        
+        $sql = "INSERT INTO bookings (user_id, full_name, email, cruise_title, cabin_type, cabin_number, adults, children, total_guests, booking_date, departure_date, return_date, total_price, special_requests) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            $user_id, $full_name, $email, $cruise_title, $cabin_type, $cabin_number,
+            $adults, $children, $total_guests, $booking_date, $departure_date, $return_date,
+            $total_price, $special_requests
+        ]);
+        
+        return [
+            'success' => true,
+            'booking_id' => $this->pdo->lastInsertId(),
+            'cabin_number' => $cabin_number
+        ];
+    } catch (PDOException $e) {
+        error_log("Booking creation error: " . $e->getMessage());
+        return ['success' => false, 'error' => 'Failed to create booking'];
+    }
+}
 
+public function getUserBookings($user_id) {
+    try {
+        $sql = "SELECT * FROM bookings WHERE user_id = ? ORDER BY created_at DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Get user bookings error: " . $e->getMessage());
+        return [];
+    }
+}
 
-    
+private function createBookingsTableIfNotExists() {
+    try {
+        $sql = "CREATE TABLE IF NOT EXISTS bookings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            cruise_title VARCHAR(255) NOT NULL,
+            cabin_type VARCHAR(50) NOT NULL,
+            cabin_number VARCHAR(20),
+            adults INT NOT NULL DEFAULT 1,
+            children INT NOT NULL DEFAULT 0,
+            total_guests INT NOT NULL,
+            booking_date DATE NOT NULL,
+            departure_date DATE NOT NULL,
+            return_date DATE NOT NULL,
+            total_price DECIMAL(10,2) NOT NULL,
+            payment_status ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+            booking_status ENUM('confirmed', 'pending', 'cancelled') DEFAULT 'pending',
+            special_requests TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )";
+        $this->pdo->exec($sql);
+    } catch (PDOException $e) {
+        error_log("Create bookings table error: " . $e->getMessage());
+    }
+}
 }
