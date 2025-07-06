@@ -1,7 +1,7 @@
 <?php
 // Allow CORS from your frontend port (5174)
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 
@@ -11,21 +11,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// Use $_POST for form fields and $_FILES for file upload
+$ship_name = $_POST['ship_name'] ?? '';
+$route = $_POST['route'] ?? '';
+$departure_port = $_POST['departure_port'] ?? '';
+$start_date = $_POST['start_date'] ?? '';
+$end_date = $_POST['end_date'] ?? '';
+$notes = $_POST['notes'] ?? null;
 
-$input = json_decode(file_get_contents("php://input"));
-
-if (!$input) {
-    http_response_code(400);
-    echo json_encode(["message" => "Invalid JSON"]);
-    exit();
+// Handle image upload
+$country_image = null;
+if (isset($_FILES['country_image']) && $_FILES['country_image']['error'] === UPLOAD_ERR_OK) {
+    $uploadDir = 'country_images/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+    $filename = uniqid() . '_' . basename($_FILES['country_image']['name']);
+    $targetFile = $uploadDir . $filename;
+    if (move_uploaded_file($_FILES['country_image']['tmp_name'], $targetFile)) {
+        $country_image = $targetFile;
+    }
 }
-
-$ship_name = $input->ship_name ?? '';
-$route = $input->route ?? '';
-$departure_port = $input->departure_port ?? '';
-$start_date = $input->start_date ?? '';
-$end_date = $input->end_date ?? '';
-$notes = $input->notes ?? null;
 
 if (empty($ship_name) || empty($route) || empty($departure_port) || empty($start_date) || empty($end_date)) {
     http_response_code(400);
@@ -41,8 +45,8 @@ if ($conn->connect_error) {
     exit();
 }
 
-$stmt = $conn->prepare("INSERT INTO itineraries (ship_name, route, departure_port, start_date, end_date, notes) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssss", $ship_name, $route, $departure_port, $start_date, $end_date, $notes);
+$stmt = $conn->prepare("INSERT INTO itineraries (ship_name, route, departure_port, start_date, end_date, notes, country_image) VALUES (?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("sssssss", $ship_name, $route, $departure_port, $start_date, $end_date, $notes, $country_image);
 
 if ($stmt->execute()) {
     echo json_encode(["message" => "Itinerary saved successfully."]);

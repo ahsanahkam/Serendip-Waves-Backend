@@ -31,7 +31,12 @@ $stmt = $conn->prepare("DELETE FROM itineraries WHERE id=?");
 $stmt->bind_param("i", $id);
 
 if ($stmt->execute()) {
-    echo json_encode(["message" => "Itinerary deleted successfully."]);
+    if ($stmt->affected_rows > 0) {
+        echo json_encode(["message" => "Itinerary deleted successfully."]);
+    } else {
+        http_response_code(404);
+        echo json_encode(["message" => "Itinerary not found."]);
+    }
 } else {
     http_response_code(500);
     echo json_encode(["message" => "Delete failed: " . $stmt->error]);
