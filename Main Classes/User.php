@@ -116,10 +116,10 @@ public function login($email, $password)
             ];
         }
         
-        return [
-            "success" => false,
-            "message" => "Invalid email or password"
-        ];
+            return [
+                "success" => false,
+                "message" => "Invalid email or password"
+            ];
     } catch (PDOException $e) {
         return [
             "success" => false,
