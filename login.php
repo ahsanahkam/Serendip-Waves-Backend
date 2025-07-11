@@ -1,7 +1,21 @@
 <?php
 
 // CORS headers
-header("Access-Control-Allow-Origin: *");
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+$allowed_origins = [
+    'http://localhost:5175', // Vite dev server
+    'http://localhost:3000', // React default
+    'http://127.0.0.1:5175',
+    'http://127.0.0.1:3000',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+];
+if (in_array($origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    header("Access-Control-Allow-Origin: *");
+}
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
@@ -13,6 +27,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once './Main Classes/Customer.php';
+
+// Start session for session-based authentication
+session_start();
+
+// Handle session user check before any POST-only logic
+if (isset($_GET['action']) && $_GET['action'] === 'session_user') {
+    if (isset($_SESSION['user'])) {
+        echo json_encode(['success' => true, 'user' => $_SESSION['user']]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Not logged in']);
+    }
+    exit();
+}
 
 // Get input
 $data = json_decode(file_get_contents("php://input"));
@@ -120,6 +147,8 @@ if (isset($data->action)) {
 
     // Respond
     if ($signinResult['success']) {
+        // Store user in session
+        $_SESSION['user'] = $signinResult['user'];
         http_response_code(200);
     } else {
         http_response_code(401);
