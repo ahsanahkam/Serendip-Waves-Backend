@@ -1,23 +1,18 @@
 <?php
 
-// CORS headers
+// CORS headers - Allow all origins with credentials
 $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
-$allowed_origins = [
-    'http://localhost:5175', // Vite dev server
-    'http://localhost:3000', // React default
-    'http://127.0.0.1:5175',
-    'http://127.0.0.1:3000',
-    'http://localhost:5174',
-    'http://127.0.0.1:5174',
-];
-if (in_array($origin, $allowed_origins)) {
+
+// Allow any origin but echo back the requesting origin (required for credentials)
+if ($origin) {
     header("Access-Control-Allow-Origin: $origin");
-    header("Access-Control-Allow-Credentials: true");
 } else {
     header("Access-Control-Allow-Origin: *");
 }
+
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json");
 
 // Handle preflight request
