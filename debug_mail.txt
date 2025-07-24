@@ -1,17 +1,17 @@
 Array
 (
-    [email] => iit22096@std.uwu.ac.lk
-    [full_name] => MURALITHARAN ABINATH
-    [booking_id] => 48
-    [cruise_title] => Egypt
-    [cabin_type] => Suit
-    [cabin_number] => S001
+    [email] => abinath157@gmail.com
+    [full_name] => Abinath Muralitharan
+    [booking_id] => 71
+    [cruise_title] => Australia
+    [cabin_type] => Balcony
+    [cabin_number] => B005
     [adults] => 1
-    [children] => 3
-    [departure_date] => 2025-11-14
-    [return_date] => 2025-11-24
-    [total_price] => 10000
-    [ship_name] => Nile Majesty
-    [destination] => Egypt
-    [special_requests] => None
+    [children] => 0
+    [departure_date] => 2025-07-12
+    [return_date] => 2025-07-26
+    [total_price] => 2000
+    [ship_name] => Great Barrier Reef
+    [destination] => Australia
+    [special_requests] => 
 )
