@@ -79,13 +79,18 @@ if (isset($data->action)) {
         
     } elseif ($data->action === 'get_bookings') {
         // Get user bookings
-        if (!isset($data->user_id)) {
+        $email = null;
+        if (isset($data->email)) {
+            $email = $data->email;
+        } elseif (isset($_SESSION['user']['email'])) {
+            $email = $_SESSION['user']['email'];
+        }
+        if (!$email) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'User ID required']);
+            echo json_encode(['success' => false, 'message' => 'User email required']);
             exit();
         }
-        
-        $bookings = $userLogin->getUserBookings($data->user_id);
+        $bookings = $userLogin->getUserBookings($email);
         http_response_code(200);
         echo json_encode([
             'success' => true,

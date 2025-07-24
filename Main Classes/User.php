@@ -182,11 +182,11 @@ public function createBooking($user_id, $full_name, $email, $cruise_title, $cabi
     }
 }
 
-public function getUserBookings($user_id) {
+public function getUserBookings($email) {
     try {
-        $sql = "SELECT * FROM bookings WHERE user_id = ? ORDER BY created_at DESC";
+        $sql = "SELECT * FROM booking_overview WHERE email = ? ORDER BY booking_id DESC";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$user_id]);
+        $stmt->execute([$email]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         error_log("Get user bookings error: " . $e->getMessage());

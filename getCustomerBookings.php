@@ -16,7 +16,7 @@ if (!$email) {
     exit();
 }
 
-$stmt = $conn->prepare("SELECT * FROM booking_overview WHERE email = ?");
+$stmt = $conn->prepare("SELECT b.*, i.start_date AS departure_date, i.end_date AS return_date FROM booking_overview b LEFT JOIN itineraries i ON b.ship_name = i.ship_name AND (b.destination = i.route OR b.destination = i.destination) WHERE b.email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
