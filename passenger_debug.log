@@ -112,3 +112,32 @@ Array
         )
 
 )
+Array
+(
+    [booking_id] => 72
+    [ship_name] => Parisian Dream
+    [route] => France
+    [cabin_id] => O003
+    [passengerList] => Array
+        (
+            [0] => Array
+                (
+                    [passenger_name] => Abinath Muralitharan
+                    [email] => abinath157@gmail.com
+                    [age] => 43
+                    [gender] => Male
+                    [citizenship] => Australia
+                )
+
+            [1] => Array
+                (
+                    [passenger_name] => leo
+                    [email] => 
+                    [age] => 34
+                    [gender] => Male
+                    [citizenship] => Caribbean
+                )
+
+        )
+
+)

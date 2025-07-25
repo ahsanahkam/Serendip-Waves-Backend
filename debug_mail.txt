@@ -2,16 +2,16 @@ Array
 (
     [email] => abinath157@gmail.com
     [full_name] => Abinath Muralitharan
-    [booking_id] => 71
-    [cruise_title] => Australia
-    [cabin_type] => Balcony
-    [cabin_number] => B005
-    [adults] => 1
+    [booking_id] => 72
+    [cruise_title] => France
+    [cabin_type] => Ocean View
+    [cabin_number] => O003
+    [adults] => 2
     [children] => 0
-    [departure_date] => 2025-07-12
-    [return_date] => 2025-07-26
+    [departure_date] => 2025-10-08
+    [return_date] => 2025-10-17
     [total_price] => 2000
-    [ship_name] => Great Barrier Reef
-    [destination] => Australia
+    [ship_name] => Parisian Dream
+    [destination] => France
     [special_requests] => 
 )
