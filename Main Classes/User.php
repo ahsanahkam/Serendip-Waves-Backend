@@ -184,7 +184,11 @@ public function createBooking($user_id, $full_name, $email, $cruise_title, $cabi
 
 public function getUserBookings($email) {
     try {
-        $sql = "SELECT * FROM booking_overview WHERE email = ? ORDER BY booking_id DESC";
+        $sql = "SELECT bo.*, it.start_date AS departure_date, it.end_date AS return_date
+                FROM booking_overview bo
+                LEFT JOIN itineraries it ON bo.ship_name = it.ship_name AND bo.destination = it.route
+                WHERE bo.email = ?
+                ORDER BY bo.booking_id DESC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$email]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
