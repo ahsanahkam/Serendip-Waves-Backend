@@ -15,7 +15,7 @@ require_once __DIR__ . '/Main Classes/Mailer.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 // Add debug logging to capture POST data
-file_put_contents(__DIR__ . '/debug_mail.txt', print_r($data, true));
+
 
 // Required fields
 $required = [

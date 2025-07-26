@@ -16,7 +16,6 @@ require_once __DIR__ . '/DbConnector.php'; // assumes $conn is your mysqli conne
 require_once __DIR__ . '/CabinManager.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
-file_put_contents(__DIR__ . '/cabin_debug.log', print_r($data, true), FILE_APPEND);
 
 $required = [
     'booking_id', 'passenger_name', 'cruise_name', 'cabin_type',
@@ -43,6 +42,6 @@ try {
     );
     echo json_encode($result);
 } catch (Exception $e) {
-    file_put_contents(__DIR__ . '/cabin_debug.log', $e->getMessage() . PHP_EOL, FILE_APPEND);
+    
     echo json_encode(['success' => false, 'message' => 'Error adding cabin', 'error' => $e->getMessage()]);
 }

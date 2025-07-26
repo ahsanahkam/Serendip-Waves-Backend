@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/config/db.php';
 
 $data = json_decode(file_get_contents('php://input'), true);
-file_put_contents(__DIR__ . '/passenger_debug.log', print_r($data, true), FILE_APPEND);
+
 
 $required = ['booking_id', 'ship_name', 'route', 'cabin_id', 'passengerList'];
 foreach ($required as $field) {
@@ -57,7 +57,7 @@ try {
     }
     echo json_encode(['success' => true, 'message' => 'Passengers added successfully']);
 } catch (PDOException $e) {
-    file_put_contents(__DIR__ . '/passenger_debug.log', $e->getMessage() . PHP_EOL, FILE_APPEND);
+    
 echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 

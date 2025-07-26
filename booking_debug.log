@@ -1,9 +1,0 @@
-
-==== NEW BOOKING ATTEMPT ====
-DB: serendip
-POST DATA: {"full_name":"Abinath Muralitharan","gender":"Male","email":"abinath157@gmail.com","citizenship":"Norway","age":"22","room_type":"Ocean View","adults":1,"children":0,"number_of_guests":1,"card_type":"Visa","card_number":"2324345456576767","ship_name":"Cherry Blossom Voyage","destination":"Japan","total_price":1000}
-ROOM TYPE: 
-CABIN NUMBER: 
-SHIP: 
-DEST: 
-TOTAL PRICE: 
