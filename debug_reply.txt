@@ -1,7 +1,0 @@
-Array
-(
-    [to] => abi@gmail.com
-    [subject] => Reply to your enquiry at Serendip Waves
-    [message] => fef
-    [name] => Abinath Muralitharan
-)

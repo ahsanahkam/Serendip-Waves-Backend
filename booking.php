@@ -146,9 +146,28 @@ try {
     exit();
 }
 
+require_once __DIR__ . '/CabinManager.php';
+
 try {
     if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Booking added successfully!', 'booking_id' => $stmt->insert_id, 'cabin_number' => $cabin_number]);
+        $booking_id = $stmt->insert_id;
+        $booking_date = date('Y-m-d');
+        // Insert into cabin_management
+        $cabinManager = new CabinManager($conn);
+        $cabinResult = $cabinManager->addCabin(
+            $booking_id,
+            $data['full_name'], // passenger_name
+            $ship_name,         // cruise_name
+            $room_type,         // cabin_type
+            $cabin_number,      // cabin_number
+            $data['number_of_guests'], // guests_count
+            $booking_date,      // booking_date
+            $total_price        // total_cost
+        );
+        if (!$cabinResult['success']) {
+            file_put_contents(__DIR__ . '/cabin_debug.log', "Cabin insert failed: " . $cabinResult['error'] . PHP_EOL, FILE_APPEND);
+        }
+        echo json_encode(['success' => true, 'message' => 'Booking added successfully!', 'booking_id' => $booking_id, 'cabin_number' => $cabin_number, 'cabin_inserted' => $cabinResult['success']]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Booking failed', 'error' => $stmt->error]);
     }
