@@ -1,0 +1,88 @@
+<?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Credentials: true");
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once './DbConnector.php';
+
+if (!isset($_GET['booking_id']) || empty($_GET['booking_id'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Booking ID is required'
+    ]);
+    exit();
+}
+
+$booking_id = $_GET['booking_id'];
+
+try {
+    $dbConnector = new DbConnector();
+    $pdo = $dbConnector->connect();
+    
+    // Get passenger data from booking_overview table with trip dates
+    $query = "SELECT b.full_name as passenger_name, b.email, b.gender, b.citizenship, b.age, b.ship_name, b.destination, b.room_type, b.adults, b.children,
+                     i.start_date AS departure_date, i.end_date AS return_date
+              FROM booking_overview b 
+              LEFT JOIN itineraries i ON b.ship_name = i.ship_name AND b.destination = i.route
+              WHERE b.booking_id = ?";
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute([$booking_id]);
+    $passenger = $stmt->fetch();
+    
+    if ($passenger) {
+        // Debug logging
+        error_log("Passenger data found for booking_id $booking_id: " . json_encode($passenger));
+        
+        // Check if journey is completed
+        $today = date('Y-m-d');
+        $journey_completed = $passenger['return_date'] && $passenger['return_date'] < $today;
+        
+        // Calculate trip duration in days
+        $trip_duration = 0;
+        if ($passenger['departure_date'] && $passenger['return_date']) {
+            $start = new DateTime($passenger['departure_date']);
+            $end = new DateTime($passenger['return_date']);
+            $trip_duration = $end->diff($start)->days;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'passenger' => [
+                'passenger_name' => $passenger['passenger_name'],
+                'email' => $passenger['email'],
+                'gender' => $passenger['gender'],
+                'citizenship' => $passenger['citizenship'],
+                'age' => $passenger['age'],
+                'ship_name' => $passenger['ship_name'],
+                'destination' => $passenger['destination'],
+                'room_type' => $passenger['room_type'],
+                'adults' => $passenger['adults'],
+                'children' => $passenger['children'],
+                'departure_date' => $passenger['departure_date'],
+                'return_date' => $passenger['return_date'],
+                'trip_duration' => $trip_duration,
+                'journey_completed' => $journey_completed,
+                'booking_id' => $booking_id
+            ]
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'No passenger found for this booking ID'
+        ]);
+    }
+    
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Database error: ' . $e->getMessage()
+    ]);
+}
+?>

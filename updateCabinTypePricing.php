@@ -3,7 +3,8 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Content-Type: application/json');
-require_once __DIR__ . '/config/db.php';
+
+require_once __DIR__ . '/DbConnector.php';
 
 $response = array('success' => false);
 
@@ -33,7 +34,6 @@ if (!$id) {
 }
 
 try {
-    require_once __DIR__ . '/DbConnector.php';
     $db = new DBConnector();
     $pdo = $db->connect();
     $stmt = $pdo->prepare('UPDATE cabin_type_pricing SET interior_price = ?, ocean_view_price = ?, balcony_price = ?, suit_price = ? WHERE id = ?');

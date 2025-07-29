@@ -16,7 +16,20 @@ if (!$email) {
     exit();
 }
 
-$stmt = $conn->prepare("SELECT b.*, i.start_date AS departure_date, i.end_date AS return_date FROM booking_overview b LEFT JOIN itineraries i ON b.ship_name = i.ship_name AND (b.destination = i.route OR b.destination = i.destination) WHERE b.email = ?");
+$stmt = $conn->prepare("
+    SELECT 
+        b.*, 
+        i.start_date AS departure_date, 
+        i.end_date AS return_date,
+        fp.payment_status as facility_payment_status,
+        fp.total_cost as facility_total_cost,
+        fp.created_at as facility_booking_date
+    FROM booking_overview b 
+    LEFT JOIN itineraries i ON b.ship_name = i.ship_name AND b.destination = i.route 
+    LEFT JOIN facility_preferences fp ON b.booking_id = fp.booking_id
+    WHERE b.email = ?
+    ORDER BY b.booking_date DESC
+");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $result = $stmt->get_result();
