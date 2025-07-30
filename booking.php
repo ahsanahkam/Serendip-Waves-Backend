@@ -73,7 +73,7 @@ $room_percentages = [
     'Interior' => 0.5,
     'Ocean View' => 0.25,
     'Balcony' => 0.15,
-    'Suit' => 0.10
+    'Suite' => 0.10
 ];
 $room_type = $data['room_type'];
 if (!isset($room_percentages[$room_type])) {
@@ -101,11 +101,11 @@ if ($current_bookings >= $max_cabins) {
 $cabin_number = $room_type[0] . str_pad($current_bookings + 1, 3, "0", STR_PAD_LEFT);
 
 // --- Dynamic Pricing Calculation ---
-$total_price = null;
+$total_price = 0; // Default to 0 instead of null
 if ($ship_name && $room_type) {
     // Try to get route from POST data if available
-    $route = $data['route'] ?? null;
-    $pricing_sql = "SELECT interior_price, ocean_view_price, balcony_price, suit_price FROM cabin_type_pricing WHERE ship_name = ?";
+    $route = $data['route'] ?? $destination ?? null;
+    $pricing_sql = "SELECT interior_price, ocean_view_price, balcony_price, suite_price FROM cabin_type_pricing WHERE ship_name = ?";
     $params = [$ship_name];
     $types = "s";
     if ($route) {
@@ -116,16 +116,27 @@ if ($ship_name && $room_type) {
     $pricing_stmt = $conn->prepare($pricing_sql);
     $pricing_stmt->bind_param($types, ...$params);
     $pricing_stmt->execute();
-    $pricing_stmt->bind_result($interior, $ocean_view, $balcony, $suit);
+    $pricing_stmt->bind_result($interior, $ocean_view, $balcony, $suite);
     if ($pricing_stmt->fetch()) {
         $price = 0;
         if ($room_type === 'Interior') $price = $interior;
         elseif ($room_type === 'Ocean View') $price = $ocean_view;
         elseif ($room_type === 'Balcony') $price = $balcony;
-        elseif ($room_type === 'Suit') $price = $suit;
-        $adults = isset($data['adults']) ? (int)$data['adults'] : 0;
-        $children = isset($data['children']) ? (int)$data['children'] : 0;
-        $total_price = ($adults * $price) + ($children * $price * 0.5);
+        elseif ($room_type === 'Suite') $price = $suite;
+        
+        // Use the adults and children values already defined above
+        // If adults + children doesn't equal number_of_guests, treat all as adults
+        $total_guests = $adults + $children;
+        if ($total_guests != $data['number_of_guests']) {
+            // Fallback: treat all guests as adults if breakdown doesn't match
+            $total_price = $data['number_of_guests'] * $price;
+        } else {
+            // Use the specific adult/children breakdown (children pay half price)
+            $total_price = ($adults * $price) + ($children * $price * 0.5);
+        }
+    } else {
+        // If no pricing found, log for debugging
+        error_log("No pricing found for ship: $ship_name, route: $route, room_type: $room_type");
     }
     $pricing_stmt->close();
 }
