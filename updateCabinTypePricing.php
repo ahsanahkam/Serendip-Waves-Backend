@@ -25,7 +25,7 @@ $id = $input['id'] ?? null;
 $interior_price = $input['interior_price'] ?? 0;
 $ocean_view_price = $input['ocean_view_price'] ?? 0;
 $balcony_price = $input['balcony_price'] ?? 0;
-$suit_price = $input['suit_price'] ?? 0;
+$suite_price = $input['suite_price'] ?? 0;
 
 if (!$id) {
     $response['message'] = 'Missing pricing record ID.';
@@ -36,8 +36,8 @@ if (!$id) {
 try {
     $db = new DBConnector();
     $pdo = $db->connect();
-    $stmt = $pdo->prepare('UPDATE cabin_type_pricing SET interior_price = ?, ocean_view_price = ?, balcony_price = ?, suit_price = ? WHERE id = ?');
-    $stmt->execute([$interior_price, $ocean_view_price, $balcony_price, $suit_price, $id]);
+    $stmt = $pdo->prepare('UPDATE cabin_type_pricing SET interior_price = ?, ocean_view_price = ?, balcony_price = ?, suite_price = ? WHERE id = ?');
+    $stmt->execute([$interior_price, $ocean_view_price, $balcony_price, $suite_price, $id]);
     $response['success'] = true;
     $response['message'] = 'Pricing updated.';
 } catch (Exception $e) {

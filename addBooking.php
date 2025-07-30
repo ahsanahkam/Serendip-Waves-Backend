@@ -147,7 +147,8 @@ try {
         $data->ship_name ?? '',
         $data->destination ?? '',
         $data->card_type ?? 'Visa',
-        $data->card_number ?? '0000000000000000'
+        $data->card_number ?? '0000000000000000',
+        $data->card_expiry ?? ''
     );
     
     // If booking was successful, send confirmation email (only if requested)

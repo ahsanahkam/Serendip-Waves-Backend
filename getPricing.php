@@ -42,7 +42,7 @@ try {
             'Interior' => $pricing['interior_price'],
             'Ocean View' => $pricing['ocean_view_price'],
             'Balcony' => $pricing['balcony_price'],
-            'Suit' => $pricing['suit_price']
+            'Suite' => $pricing['suite_price']
         ];
         
         if (!isset($price_map[$room_type])) {
@@ -88,8 +88,8 @@ try {
                         'total_for_guests' => floatval($pricing['balcony_price']) * $number_of_guests
                     ],
                     'suite' => [
-                        'price_per_person' => floatval($pricing['suit_price']),
-                        'total_for_guests' => floatval($pricing['suit_price']) * $number_of_guests
+                        'price_per_person' => floatval($pricing['suite_price']),
+                        'total_for_guests' => floatval($pricing['suite_price']) * $number_of_guests
                     ]
                 ],
                 'number_of_guests' => $number_of_guests

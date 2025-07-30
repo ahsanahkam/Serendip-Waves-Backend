@@ -28,7 +28,7 @@ $route = $input['route'] ?? '';
 $interior_price = $input['interior_price'] ?? 0;
 $ocean_view_price = $input['ocean_view_price'] ?? 0;
 $balcony_price = $input['balcony_price'] ?? 0;
-$suit_price = $input['suit_price'] ?? 0;
+$suite_price = $input['suite_price'] ?? 0;
 
 if (!$ship_name || !$route) {
     $response['message'] = 'Ship name and route are required.';
@@ -48,8 +48,8 @@ try {
         exit;
     }
     // Insert new pricing
-    $stmt = $pdo->prepare('INSERT INTO cabin_type_pricing (ship_name, route, interior_price, ocean_view_price, balcony_price, suit_price) VALUES (?, ?, ?, ?, ?, ?)');
-    $stmt->execute([$ship_name, $route, $interior_price, $ocean_view_price, $balcony_price, $suit_price]);
+    $stmt = $pdo->prepare('INSERT INTO cabin_type_pricing (ship_name, route, interior_price, ocean_view_price, balcony_price, suite_price) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->execute([$ship_name, $route, $interior_price, $ocean_view_price, $balcony_price, $suite_price]);
     $response['success'] = true;
     $response['message'] = 'Pricing added.';
 } catch (Exception $e) {

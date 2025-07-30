@@ -32,9 +32,9 @@ class Booking {
             
             $base_price = $pricing['price'];
             
-            // Calculate total price based on adult/child breakdown or number of guests
+            // Calculate total price based on number of guests and duration
             $trip_duration = $this->getTripDuration($ship_name, $destination);
-            $total_price = $this->calculateTotalPrice($base_price, $adults, $children, $number_of_guests);
+            $total_price = $this->calculateTotalPrice($base_price, $number_of_guests, $trip_duration);
             
             // Generate cabin number if not provided
             if (empty($cabin_number)) {
@@ -121,21 +121,16 @@ class Booking {
     
     private function getCabinTypePrice($ship_name, $route, $room_type) {
         try {
-            // Map room types to database column names (handle variations)
+            // Map room types to database column names
             $price_column_map = [
                 'Interior' => 'interior_price',
-                'Ocean View' => 'ocean_view_price',
+                'Ocean View' => 'ocean_view_price', 
                 'Balcony' => 'balcony_price',
                 'Suite' => 'suite_price'
             ];
             
-            // Normalize the room type (trim and handle case variations)
-            $room_type = trim($room_type);
-            
             if (!isset($price_column_map[$room_type])) {
-                // Log the invalid room type for debugging
-                error_log("Invalid room type received: '$room_type'. Valid types: " . implode(', ', array_keys($price_column_map)));
-                return ['success' => false, 'message' => "Invalid room type: '$room_type'. Valid types: Interior, Ocean View, Balcony, Suite"];
+                return ['success' => false, 'message' => 'Invalid room type'];
             }
             
             $price_column = $price_column_map[$room_type];
@@ -167,17 +162,8 @@ class Booking {
         }
     }
     
-    private function calculateTotalPrice($base_price, $adults, $children, $number_of_guests) {
-        // Price is per person for the entire trip, not per day
-        $total_guests = $adults + $children;
-        
-        if ($total_guests == $number_of_guests && $total_guests > 0) {
-            // Use the specific adult/children breakdown (children pay half price)
-            return ($adults * $base_price) + ($children * $base_price * 0.5);
-        } else {
-            // Fallback: treat all guests as adults if breakdown doesn't match
-            return $number_of_guests * $base_price;
-        }
+    private function calculateTotalPrice($base_price, $number_of_guests, $trip_duration) {
+        return $base_price * $number_of_guests * $trip_duration;
     }
     
     private function generateCabinNumber($room_type) {
