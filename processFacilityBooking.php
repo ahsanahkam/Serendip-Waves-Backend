@@ -100,13 +100,31 @@ try {
             $paymentStatus = 'paid';
             
             // Check if preference already exists
-            $checkQuery = "SELECT id FROM facility_preferences WHERE booking_id = ?";
+            $checkQuery = "SELECT id, selected_facilities, quantities, total_cost FROM facility_preferences WHERE booking_id = ?";
             $checkStmt = $pdo->prepare($checkQuery);
             $checkStmt->execute([$bookingId]);
-            $exists = $checkStmt->fetch();
+            $existingRecord = $checkStmt->fetch();
             
-            if ($exists) {
-                // Update existing record
+            if ($existingRecord) {
+                // Merge with existing facilities instead of overwriting
+                $existingFacilities = json_decode($existingRecord['selected_facilities'], true) ?: [];
+                $existingQuantities = json_decode($existingRecord['quantities'], true) ?: [];
+                
+                // Merge new facilities with existing ones
+                $mergedFacilities = array_merge($existingFacilities, $selectedFacilities);
+                $mergedQuantities = array_merge($existingQuantities, $quantities);
+                
+                // Recalculate total cost based on merged facilities (not just adding totals)
+                $mergedTotalCost = 0;
+                foreach ($mergedFacilities as $facilityCode => $isSelected) {
+                    if ($isSelected && isset($facilityMap[$facilityCode])) {
+                        $quantity = $mergedQuantities[$facilityCode] ?? 1;
+                        $facilityPrice = $facilityMap[$facilityCode]['price'];
+                        $mergedTotalCost += $facilityPrice * $quantity;
+                    }
+                }
+                
+                // Update existing record with merged data
                 $updateQuery = "
                     UPDATE facility_preferences 
                     SET passenger_name = ?, selected_facilities = ?, quantities = ?, total_cost = ?, payment_status = ?, status = ?
@@ -115,9 +133,9 @@ try {
                 $updateStmt = $pdo->prepare($updateQuery);
                 $updateStmt->execute([
                     $passengerName,
-                    json_encode($selectedFacilities),
-                    json_encode($quantities),
-                    $totalCost,
+                    json_encode($mergedFacilities),
+                    json_encode($mergedQuantities),
+                    $mergedTotalCost,
                     $paymentStatus,
                     $paymentStatus,
                     $bookingId
@@ -153,13 +171,31 @@ try {
             $paymentStatus = 'pending';
             
             // Check if preference already exists
-            $checkQuery = "SELECT id FROM facility_preferences WHERE booking_id = ?";
+            $checkQuery = "SELECT id, selected_facilities, quantities, total_cost FROM facility_preferences WHERE booking_id = ?";
             $checkStmt = $pdo->prepare($checkQuery);
             $checkStmt->execute([$bookingId]);
-            $exists = $checkStmt->fetch();
+            $existingRecord = $checkStmt->fetch();
             
-            if ($exists) {
-                // Update existing record
+            if ($existingRecord) {
+                // Merge with existing facilities for pending bookings too
+                $existingFacilities = json_decode($existingRecord['selected_facilities'], true) ?: [];
+                $existingQuantities = json_decode($existingRecord['quantities'], true) ?: [];
+                
+                // Merge new facilities with existing ones
+                $mergedFacilities = array_merge($existingFacilities, $selectedFacilities);
+                $mergedQuantities = array_merge($existingQuantities, $quantities);
+                
+                // Recalculate total cost based on merged facilities (not just adding totals)
+                $mergedTotalCost = 0;
+                foreach ($mergedFacilities as $facilityCode => $isSelected) {
+                    if ($isSelected && isset($facilityMap[$facilityCode])) {
+                        $quantity = $mergedQuantities[$facilityCode] ?? 1;
+                        $facilityPrice = $facilityMap[$facilityCode]['price'];
+                        $mergedTotalCost += $facilityPrice * $quantity;
+                    }
+                }
+                
+                // Update existing record with merged data
                 $updateQuery = "
                     UPDATE facility_preferences 
                     SET passenger_name = ?, selected_facilities = ?, quantities = ?, total_cost = ?, payment_status = ?, status = ?
@@ -168,9 +204,9 @@ try {
                 $updateStmt = $pdo->prepare($updateQuery);
                 $updateStmt->execute([
                     $passengerName,
-                    json_encode($selectedFacilities),
-                    json_encode($quantities),
-                    $totalCost,
+                    json_encode($mergedFacilities),
+                    json_encode($mergedQuantities),
+                    $mergedTotalCost,
                     $paymentStatus,
                     $paymentStatus,
                     $bookingId
@@ -349,30 +385,32 @@ function generatePendingEmail($passengerName, $bookingId, $facilityDetails, $tot
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background-color: #ffc107; color: #333; padding: 20px; text-align: center; }
             .content { padding: 20px; background-color: #f9f9f9; }
-            .facilities-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .facilities-table th { background-color: #ffc107; color: #333; padding: 10px; text-align: left; }
+            .booking-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .booking-table th { background-color: #ffc107; color: #333; padding: 10px; text-align: left; }
+            .booking-table td { padding: 8px; border-bottom: 1px solid #ddd; }
             .total { font-weight: bold; font-size: 18px; color: #ffc107; }
             .footer { background-color: #6c757d; color: white; padding: 15px; text-align: center; }
-            .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px; }
+            .info-box { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px; }
+            .warning-box { background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 15px 0; border-radius: 5px; }
         </style>
     </head>
     <body>
         <div class='container'>
             <div class='header'>
-                <h1>⏳ Facility Booking Saved - Payment Pending</h1>
+                <h1>⏳ Facility Booking Saved!</h1>
                 <p>Serendip Waves Cruise</p>
             </div>
             <div class='content'>
                 <h2>Dear {$passengerName},</h2>
-                <p>Your facility preferences have been <strong>saved</strong> for booking ID: <strong>{$bookingId}</strong></p>
+                <p>Great news! Your facility preferences have been <strong>successfully saved</strong> for booking ID: <strong>{$bookingId}</strong></p>
                 
-                <div class='warning'>
-                    <h3>⚠️ Payment Required</h3>
-                    <p>Your booking is currently <strong>pending payment</strong>. Please complete the payment to confirm your facilities.</p>
+                <div class='warning-box'>
+                    <h3>⚠️ Payment Required to Confirm</h3>
+                    <p><strong>Your booking is currently pending payment.</strong> Please complete the payment to confirm and secure your selected facilities for your cruise experience.</p>
                 </div>
                 
-                <h3>📋 Selected Facilities:</h3>
-                <table class='facilities-table'>
+                <h3>🎯 Your Selected Facilities:</h3>
+                <table class='booking-table'>
                     <thead>
                         <tr>
                             <th>Facility</th>
@@ -384,18 +422,40 @@ function generatePendingEmail($passengerName, $bookingId, $facilityDetails, $tot
                     <tbody>
                         {$facilitiesHtml}
                     </tbody>
+                    <tfoot>
+                        <tr style='background-color: #fff3cd;'>
+                            <th colspan='3' style='text-align: right; padding: 10px;'>Total Amount Due:</th>
+                            <th style='text-align: right; padding: 10px; color: #856404;'>$" . number_format($totalCost, 2) . "</th>
+                        </tr>
+                    </tfoot>
                 </table>
                 
-                <div class='total'>
-                    <p>Total Amount Due: $" . number_format($totalCost, 2) . "</p>
+                <div class='info-box'>
+                    <h3>🎉 What's Next?</h3>
+                    <p>• Complete your payment to confirm these facilities<br>
+                    • You can modify your selection anytime before payment<br>
+                    • Visit your customer dashboard to manage your booking<br>
+                    • Contact us if you need assistance with your booking</p>
                 </div>
                 
-                <p>💳 Please complete your payment to secure these facilities for your cruise.</p>
-                <p>You can update your preferences anytime before your cruise departure.</p>
+                <div class='info-box'>
+                    <h3>Important Notes:</h3>
+                    <p>• Your preferences are saved but not yet confirmed<br>
+                    • Facilities are subject to availability until payment is completed<br>
+                    • Complete payment soon to avoid disappointment<br>
+                    • You can update your preferences anytime before payment</p>
+                </div>
+                
+                <p>💳 Ready to confirm? Complete your payment to secure these amazing facilities for your cruise adventure!</p>
             </div>
             <div class='footer'>
+                <p>Best regards,<br>
+                <strong>Serendip Waves Facilities Team</strong><br>
+                📞 +94771234567<br>
+                📧 facilities@serendipwaves.com<br>
+                🌐 www.serendipwaves.com</p>
                 <p>Thank you for choosing Serendip Waves!</p>
-                <p>Complete your payment soon to avoid disappointment 🚢</p>
+                <p>Complete your payment soon to secure your facilities! 🚢</p>
             </div>
         </div>
     </body>
