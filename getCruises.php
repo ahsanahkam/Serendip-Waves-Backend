@@ -16,30 +16,33 @@ try {
     $dbConnector = new DbConnector();
     $pdo = $dbConnector->connect();
     
-    // Get distinct ship names from booking_overview table
-    $query = "SELECT DISTINCT ship_name FROM booking_overview WHERE ship_name IS NOT NULL AND ship_name != '' ORDER BY ship_name";
+    // Get ship names from ship_details table first (primary source)
+    $query = "SELECT DISTINCT ship_name FROM ship_details WHERE ship_name IS NOT NULL AND ship_name != '' ORDER BY ship_name";
     $stmt = $pdo->prepare($query);
     $stmt->execute();
     $shipNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
     
-    // If no ship names found in booking_overview, provide default options
+    // If no ships in ship_details, get from booking_overview as fallback
     if (empty($shipNames)) {
-        $shipNames = [
-            'Caribbean Adventure',
-            'Mediterranean Escape', 
-            'Alaskan Expedition',
-            'Asian Discovery',
-            'Norwegian Star',
-            'Royal Princess',
-            'Celebrity Eclipse',
-            'MSC Seaside'
-        ];
+        $query = "SELECT DISTINCT ship_name FROM booking_overview WHERE ship_name IS NOT NULL AND ship_name != '' ORDER BY ship_name";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute();
+        $shipNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+    
+    // If still no ship names found, get from cabin_management as final fallback
+    if (empty($shipNames)) {
+        $query = "SELECT DISTINCT cruise_name FROM cabin_management WHERE cruise_name IS NOT NULL AND cruise_name != '' ORDER BY cruise_name";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute();
+        $shipNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
     
     echo json_encode([
         'success' => true,
         'cruises' => $shipNames,
-        'message' => 'Cruise titles retrieved successfully'
+        'message' => 'Cruise titles retrieved successfully',
+        'count' => count($shipNames)
     ]);
     
 } catch (Exception $e) {

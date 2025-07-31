@@ -16,30 +16,37 @@ try {
     $dbConnector = new DbConnector();
     $pdo = $dbConnector->connect();
     
-    // Get distinct room types from booking_overview table
+    // Get cabin types from cabin_type_pricing structure (Interior, Ocean View, Balcony, Suite)
+    $cabinTypes = ['Interior', 'Ocean View', 'Balcony', 'Suite'];
+    
+    // Also get distinct cabin types from cabin_management table
+    $query = "SELECT DISTINCT cabin_type FROM cabin_management WHERE cabin_type IS NOT NULL AND cabin_type != '' ORDER BY cabin_type";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute();
+    $dbCabinTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Merge with database cabin types (avoiding duplicates)
+    if (!empty($dbCabinTypes)) {
+        $cabinTypes = array_unique(array_merge($cabinTypes, $dbCabinTypes));
+        sort($cabinTypes);
+    }
+    
+    // Also check booking_overview for additional cabin types
     $query = "SELECT DISTINCT room_type FROM booking_overview WHERE room_type IS NOT NULL AND room_type != '' ORDER BY room_type";
     $stmt = $pdo->prepare($query);
     $stmt->execute();
-    $roomTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $bookingCabinTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
     
-    // If no room types found in booking_overview, provide default options
-    if (empty($roomTypes)) {
-        $roomTypes = [
-            'Interior',
-            'Ocean View',
-            'Balcony',
-            'Suite',
-            'Junior Suite',
-            'Presidential Suite',
-            'Family Room',
-            'Connecting Rooms'
-        ];
+    if (!empty($bookingCabinTypes)) {
+        $cabinTypes = array_unique(array_merge($cabinTypes, $bookingCabinTypes));
+        sort($cabinTypes);
     }
     
     echo json_encode([
         'success' => true,
-        'cabinTypes' => $roomTypes,
-        'message' => 'Cabin types retrieved successfully'
+        'cabinTypes' => array_values($cabinTypes), // Re-index array
+        'message' => 'Cabin types retrieved successfully',
+        'count' => count($cabinTypes)
     ]);
     
 } catch (Exception $e) {
