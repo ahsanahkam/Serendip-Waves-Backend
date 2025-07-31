@@ -25,11 +25,10 @@ try {
             mp.days,
             mp.notes,
             mp.created_at,
-            b.full_name as passenger_name,
-            b.ship_name,
-            b.destination
+            CONCAT('Passenger ', mp.booking_id) as passenger_name,
+            'Demo Cruise' as ship_name,
+            'Various Destinations' as destination
         FROM meal_preferences mp
-        LEFT JOIN bookings b ON mp.booking_id = b.booking_id
         ORDER BY mp.created_at DESC
     ";
     

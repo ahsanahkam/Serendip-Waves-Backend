@@ -30,14 +30,16 @@ try {
         CREATE TABLE IF NOT EXISTS meal_preferences (
             id INT AUTO_INCREMENT PRIMARY KEY,
             booking_id VARCHAR(50) NOT NULL,
-            meal_type VARCHAR(50) NOT NULL,
+            meal_option_id INT,
+            meal_type VARCHAR(100) NOT NULL,
             main_meals JSON,
             tea_times JSON,
             days INT DEFAULT 1,
             notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_booking (booking_id)
+            UNIQUE KEY unique_booking (booking_id),
+            FOREIGN KEY (meal_option_id) REFERENCES meal_options(option_id) ON DELETE SET NULL
         )
     ";
     $pdo->exec($createTableQuery);
@@ -55,11 +57,12 @@ try {
         // Update existing preference
         $updateQuery = "
             UPDATE meal_preferences 
-            SET meal_type = ?, main_meals = ?, tea_times = ?, days = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+            SET meal_option_id = ?, meal_type = ?, main_meals = ?, tea_times = ?, days = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
             WHERE booking_id = ?
         ";
         $stmt = $pdo->prepare($updateQuery);
         $result = $stmt->execute([
+            $data['meal_option_id'] ?? null,
             $data['meal_type'],
             $mainMealsJson,
             $teaTimesJson,
@@ -70,12 +73,13 @@ try {
     } else {
         // Insert new preference
         $insertQuery = "
-            INSERT INTO meal_preferences (booking_id, meal_type, main_meals, tea_times, days, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO meal_preferences (booking_id, meal_option_id, meal_type, main_meals, tea_times, days, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ";
         $stmt = $pdo->prepare($insertQuery);
         $result = $stmt->execute([
             $data['booking_id'],
+            $data['meal_option_id'] ?? null,
             $data['meal_type'],
             $mainMealsJson,
             $teaTimesJson,
