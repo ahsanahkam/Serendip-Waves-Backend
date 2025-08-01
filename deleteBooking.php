@@ -43,7 +43,7 @@ try {
     
     try {
         // First, check if the booking exists
-        $checkStmt = $conn->prepare("SELECT booking_id FROM bookings WHERE booking_id = ?");
+        $checkStmt = $conn->prepare("SELECT booking_id FROM booking_overview WHERE booking_id = ?");
         $checkStmt->execute([$booking_id]);
         $result = $checkStmt->fetch();
         
@@ -52,12 +52,12 @@ try {
             exit;
         }
         
-        // Delete related passengers first (if there's a passengers table)
-        $deletePassengersStmt = $conn->prepare("DELETE FROM passengers WHERE booking_id = ?");
+        // Delete related passengers first (if there's a passenger_management table)
+        $deletePassengersStmt = $conn->prepare("DELETE FROM passenger_management WHERE booking_id = ?");
         $deletePassengersStmt->execute([$booking_id]);
         
         // Delete the booking
-        $deleteBookingStmt = $conn->prepare("DELETE FROM bookings WHERE booking_id = ?");
+        $deleteBookingStmt = $conn->prepare("DELETE FROM booking_overview WHERE booking_id = ?");
         $deleteBookingStmt->execute([$booking_id]);
         
         if ($deleteBookingStmt->rowCount() > 0) {
