@@ -276,5 +276,40 @@ class Booking {
             'message' => 'Card expiry date is valid'
         ];
     }
+    
+    // Public method to get all pricing for a ship/route combination
+    public function getPricingForShipRoute($ship_name, $route) {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT interior_price, ocean_view_price, balcony_price, suite_price 
+                FROM cabin_type_pricing 
+                WHERE ship_name = ? AND route = ?
+            ");
+            $stmt->execute([$ship_name, $route]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                return [
+                    'success' => true, 
+                    'pricing' => [
+                        'interior_price' => (float)$result['interior_price'],
+                        'ocean_view_price' => (float)$result['ocean_view_price'],
+                        'balcony_price' => (float)$result['balcony_price'],
+                        'suite_price' => (float)$result['suite_price']
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => false, 
+                    'message' => 'Pricing not found for this ship and route combination'
+                ];
+            }
+        } catch (PDOException $e) {
+            return [
+                'success' => false, 
+                'message' => 'Database error: ' . $e->getMessage()
+            ];
+        }
+    }
 }
 ?>

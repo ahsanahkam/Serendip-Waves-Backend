@@ -30,9 +30,36 @@ if ($conn->connect_error) {
     exit();
 }
 
-// If action is delete, delete the item and send alert
+// If action is delete, mark as inactive instead of deleting
 if (isset($input->action) && $input->action === 'delete') {
-    // Get supplier email before deleting
+    // Get supplier email and item details before marking inactive
+    $stmt = $conn->prepare("SELECT supplier_email, food_item_name, item_status FROM food_inventory WHERE item_id=?");
+    $stmt->bind_param("i", $input->item_id);
+    $stmt->execute();
+    $stmt->bind_result($supplier_email, $food_item_name, $current_status);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Update item_status to 'inactive' instead of deleting
+    $del = $conn->prepare("UPDATE food_inventory SET item_status='inactive', status_updated_at=NOW(), status_updated_by='System' WHERE item_id=?");
+    $del->bind_param("i", $input->item_id);
+    $success = $del->execute();
+    $del->close();
+
+    if ($success) {
+        sendMail([$supplier_email], "Pantry Alert: Item Deactivated", "The item '$food_item_name' has been deactivated in the cruise ship pantry inventory.");
+        echo json_encode(["message" => "Food item deactivated and alert sent."]);
+    } else {
+        http_response_code(500);
+        echo json_encode(["message" => "Failed to deactivate food item."]);
+    }
+    $conn->close();
+    exit();
+}
+
+// If action is activate, mark as active
+if (isset($input->action) && $input->action === 'activate') {
+    // Get supplier email and item details
     $stmt = $conn->prepare("SELECT supplier_email, food_item_name FROM food_inventory WHERE item_id=?");
     $stmt->bind_param("i", $input->item_id);
     $stmt->execute();
@@ -40,17 +67,47 @@ if (isset($input->action) && $input->action === 'delete') {
     $stmt->fetch();
     $stmt->close();
 
-    $del = $conn->prepare("DELETE FROM food_inventory WHERE item_id=?");
-    $del->bind_param("i", $input->item_id);
-    $success = $del->execute();
-    $del->close();
+    // Update item_status to 'active'
+    $activate = $conn->prepare("UPDATE food_inventory SET item_status='active', status_updated_at=NOW(), status_updated_by='System' WHERE item_id=?");
+    $activate->bind_param("i", $input->item_id);
+    $success = $activate->execute();
+    $activate->close();
 
     if ($success) {
-        sendMail([$supplier_email], "Pantry Alert: Item Deleted", "The item '$food_item_name' has been deleted from the cruise ship pantry inventory.");
-        echo json_encode(["message" => "Food item deleted and alert sent."]);
+        sendMail([$supplier_email], "Pantry Alert: Item Reactivated", "The item '$food_item_name' has been reactivated in the cruise ship pantry inventory.");
+        echo json_encode(["message" => "Food item reactivated and alert sent."]);
     } else {
         http_response_code(500);
-        echo json_encode(["message" => "Failed to delete food item."]);
+        echo json_encode(["message" => "Failed to reactivate food item."]);
+    }
+    $conn->close();
+    exit();
+}
+
+// Handle toggle_status action
+if (isset($input->action) && $input->action === 'toggle_status') {
+    // Get current status and item details
+    $stmt = $conn->prepare("SELECT supplier_email, food_item_name, item_status FROM food_inventory WHERE item_id=?");
+    $stmt->bind_param("i", $input->item_id);
+    $stmt->execute();
+    $stmt->bind_result($supplier_email, $food_item_name, $current_status);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Update to the new status
+    $new_status = $input->new_status;
+    $update = $conn->prepare("UPDATE food_inventory SET item_status=?, status_updated_at=NOW(), status_updated_by='System' WHERE item_id=?");
+    $update->bind_param("si", $new_status, $input->item_id);
+    $success = $update->execute();
+    $update->close();
+
+    if ($success) {
+        $action_text = ($new_status === 'active') ? 'reactivated' : 'deactivated';
+        sendMail([$supplier_email], "Pantry Alert: Item " . ucfirst($action_text), "The item '$food_item_name' has been $action_text in the cruise ship pantry inventory.");
+        echo json_encode(["message" => "Food item $action_text and alert sent."]);
+    } else {
+        http_response_code(500);
+        echo json_encode(["message" => "Failed to update food item status."]);
     }
     $conn->close();
     exit();
@@ -58,14 +115,15 @@ if (isset($input->action) && $input->action === 'delete') {
 
 $stmt = $conn->prepare("
     UPDATE food_inventory
-    SET food_item_name=?, category=?, quantity_in_stock=?, unit_price=?, expiry_date=?, purchase_date=?, supplier_name=?, supplier_contact=?, supplier_email=?, status=?
+    SET food_item_name=?, category=?, quantity_in_stock=?, unit=?, unit_price=?, expiry_date=?, purchase_date=?, supplier_name=?, supplier_contact=?, supplier_email=?, status=?
     WHERE item_id=?
 ");
 $stmt->bind_param(
-    "ssidssssssi",
+    "ssissssssssi",
     $input->food_item_name,
     $input->category,
     $input->quantity_in_stock,
+    $input->unit,
     $input->unit_price,
     $input->expiry_date,
     $purchase_date,

@@ -42,7 +42,46 @@ try {
             break;
             
         case 'POST':
-            $input = json_decode(file_get_contents('php://input'), true);
+            // Handle both JSON and FormData input (like cruise ships)
+            $input = [];
+            
+            if ($_SERVER['CONTENT_TYPE'] && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false) {
+                // FormData from frontend with file upload
+                $input = $_POST;
+                
+                // Handle image upload if present
+                $imagePath = '';
+                if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = 'meal_images/';
+                    if (!file_exists($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    
+                    $fileExtension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+                    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                    
+                    if (in_array($fileExtension, $allowedExtensions)) {
+                        $filename = uniqid() . '.' . $fileExtension;
+                        $filepath = $uploadDir . $filename;
+                        
+                        if (move_uploaded_file($_FILES['image']['tmp_name'], $filepath)) {
+                            $imagePath = $filename; // Store just the filename, not the full path
+                        }
+                    }
+                }
+                
+                // Use uploaded image or existing image
+                if (!empty($imagePath)) {
+                    $input['image'] = $imagePath;
+                } else if (isset($input['existing_image'])) {
+                    $input['image'] = $input['existing_image'];
+                } else {
+                    $input['image'] = '';
+                }
+            } else {
+                // JSON input (backward compatibility)
+                $input = json_decode(file_get_contents('php://input'), true);
+            }
             
             if (!isset($input['action'])) {
                 throw new Exception('Action not specified');

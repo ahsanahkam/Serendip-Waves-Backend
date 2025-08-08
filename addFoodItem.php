@@ -23,6 +23,7 @@ if (!$input) {
 $food_item_name   = $input->food_item_name ?? '';
 $category         = $input->category ?? '';
 $quantity_in_stock = $input->quantity_in_stock ?? 0;
+$unit             = $input->unit ?? 'kg'; // Add unit field with default
 $unit_price       = $input->unit_price ?? 0.00;
 $expiry_date      = $input->expiry_date ?? '';
 $purchase_date    = $input->purchase_date ?? null;
@@ -54,18 +55,19 @@ if ($conn->connect_error) {
     exit();
 }
 
-// Insert query
+// Insert query - include unit and item_status with default 'active'
 $stmt = $conn->prepare("
     INSERT INTO food_inventory 
-    (food_item_name, category, quantity_in_stock, unit_price, expiry_date, purchase_date, supplier_name, supplier_contact, supplier_email, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (food_item_name, category, quantity_in_stock, unit, unit_price, expiry_date, purchase_date, supplier_name, supplier_contact, supplier_email, status, item_status, status_updated_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 'System')
 ");
 
 $stmt->bind_param(
-    "ssidssssss",
+    "ssissssssss",
     $food_item_name,
     $category,
     $quantity_in_stock,
+    $unit,
     $unit_price,
     $expiry_date,
     $purchase_date,

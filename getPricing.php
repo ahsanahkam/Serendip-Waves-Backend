@@ -26,16 +26,18 @@ try {
     
     $booking = new Booking();
     
+    // Get pricing for the ship/route (used by both specific and all room types)
+    $pricing_result = $booking->getPricingForShipRoute($ship_name, $route);
+    
+    if (!$pricing_result['success']) {
+        echo json_encode($pricing_result);
+        exit();
+    }
+    
+    $pricing = $pricing_result['pricing'];
+    
     if (!empty($room_type)) {
         // Get pricing for specific room type
-        $pricing_result = $booking->getPricingForShipRoute($ship_name, $route);
-        
-        if (!$pricing_result['success']) {
-            echo json_encode($pricing_result);
-            exit();
-        }
-        
-        $pricing = $pricing_result['pricing'];
         
         // Map room types to prices
         $price_map = [
@@ -64,17 +66,12 @@ try {
         ]);
         
     } else {
-        // Get all pricing for the ship/route
-        $result = $booking->getPricingForShipRoute($ship_name, $route);
-        
-        if ($result['success']) {
-            $pricing = $result['pricing'];
-            
-            echo json_encode([
-                'success' => true,
-                'ship_name' => $ship_name,
-                'route' => $route,
-                'pricing' => [
+        // Use the already fetched pricing for all room types
+        echo json_encode([
+            'success' => true,
+            'ship_name' => $ship_name,
+            'route' => $route,
+            'pricing' => [
                     'interior' => [
                         'price_per_person' => floatval($pricing['interior_price']),
                         'total_for_guests' => floatval($pricing['interior_price']) * $number_of_guests
@@ -94,9 +91,6 @@ try {
                 ],
                 'number_of_guests' => $number_of_guests
             ]);
-        } else {
-            echo json_encode($result);
-        }
     }
     
 } catch (Exception $e) {
