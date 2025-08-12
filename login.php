@@ -27,7 +27,23 @@ session_start();
 // Handle session user check before any POST-only logic
 if (isset($_GET['action']) && $_GET['action'] === 'session_user') {
     if (isset($_SESSION['user'])) {
-        echo json_encode(['success' => true, 'user' => $_SESSION['user']]);
+        $sessionUser = $_SESSION['user'];
+        // Reload latest user from DB to reflect role changes
+        $userLogin = new Customer();
+        $fresh = $userLogin->getUserById($sessionUser['id']);
+        if ($fresh) {
+            // Rebuild minimal session payload with normalized role + ui_role
+            $role = isset($fresh['role']) ? strtolower(trim($fresh['role'])) : null;
+            $ui_role = ($role === 'registered' || $role === 'passenger') ? 'customer' : $role;
+            $sessionUser = array_merge($sessionUser, [
+                'full_name' => $fresh['full_name'] ?? $sessionUser['full_name'] ?? null,
+                'email' => $fresh['email'] ?? $sessionUser['email'] ?? null,
+                'role' => $role,
+                'ui_role' => $ui_role,
+            ]);
+            $_SESSION['user'] = $sessionUser;
+        }
+        echo json_encode(['success' => true, 'user' => $sessionUser]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Not logged in']);
     }

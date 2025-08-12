@@ -14,7 +14,9 @@ class Customer extends User {
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && (password_verify($password, $user['password']) || $user['password'] === $password)) {
+    if ($user && (password_verify($password, $user['password']) || $user['password'] === $password)) {
+        $role = isset($user['role']) ? strtolower($user['role']) : null;
+        $ui_role = ($role === 'registered' || $role === 'passenger') ? 'customer' : $role;
             return [
                 'success' => true,
                 'user' => [
@@ -28,7 +30,8 @@ class Customer extends User {
                     'profile_image' => $user['profile_image'] ?? null,
                     'created_at' => $user['created_at'] ?? null,
                     'updated_at' => $user['updated_at'] ?? null,
-                    'role' => $user['role'] ?? null
+            'role' => $user['role'] ?? null,
+            'ui_role' => $ui_role
                 ]
             ];
         }

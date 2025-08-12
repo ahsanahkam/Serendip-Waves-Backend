@@ -23,7 +23,7 @@ if (!$user_id) {
 
 try {
     $db = (new DBConnector())->connect();
-    $stmt = $db->prepare('SELECT * FROM customers WHERE id = ?');
+    $stmt = $db->prepare('SELECT * FROM users WHERE id = ?');
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($user) {

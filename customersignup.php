@@ -38,12 +38,30 @@ $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 $customerRegister = new Customer();
 $result = $customerRegister->registerUser($full_name, $email, $hashed_password, $phone_number, $date_of_birth, $gender, $passport_number);
 
-if ($result) {
-    http_response_code(200);
-    echo json_encode(["status" => "success", "message" => "Customer was successfully registered."]);
+// Handle detailed response from registerUser
+if (is_array($result)) {
+    if ($result['success']) {
+        http_response_code(200);
+        echo json_encode(["status" => "success", "message" => $result['message']]);
+    } else {
+        // Handle specific error types
+        if ($result['error'] === 'email_exists') {
+            http_response_code(409); // Conflict status code for existing resource
+            echo json_encode(["status" => "error", "error_type" => "email_exists", "message" => $result['message']]);
+        } else {
+            http_response_code(500); // Server error for database issues
+            echo json_encode(["status" => "error", "error_type" => $result['error'], "message" => $result['message']]);
+        }
+    }
 } else {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Unable to register the Customer."]);
+    // Fallback for old boolean response (shouldn't happen with updated code)
+    if ($result) {
+        http_response_code(200);
+        echo json_encode(["status" => "success", "message" => "Customer was successfully registered."]);
+    } else {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => "Unable to register the Customer."]);
+    }
 }
 
 

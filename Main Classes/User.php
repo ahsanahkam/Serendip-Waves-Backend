@@ -56,13 +56,12 @@ public function registerUser($full_name, $email, $password, $phone_number, $date
     $this->passport_number = $passport_number;
 
     if ($this->isAlreadyExists()) {
-        // Optionally: throw error or log that user exists
-        // Just returning false here means frontend will show generic message
-        return false;
+        // Return specific error for existing user
+        return ['success' => false, 'error' => 'email_exists', 'message' => 'An account with this email address already exists.'];
     }
 
     try {
-        $sql = "INSERT INTO users (full_name, email, password, phone_number, date_of_birth, gender, passport_number) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO users (full_name, email, password, phone_number, date_of_birth, gender, passport_number, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(1, $this->full_name);
         $stmt->bindParam(2, $this->email);
@@ -70,18 +69,20 @@ public function registerUser($full_name, $email, $password, $phone_number, $date
         $stmt->bindParam(4, $this->phone_number);
         $stmt->bindParam(5, $this->date_of_birth);
         $stmt->bindParam(6, $this->gender);
-        $stmt->bindParam(7, $this->passport_number);    
+    $stmt->bindParam(7, $this->passport_number);
+    // Bind role correctly (bindParam requires a variable; use bindValue for literal)
+    $stmt->bindValue(8, 'registered', PDO::PARAM_STR);
         $rs = $stmt->execute();
 
         if ($rs) {
-            return true;
+            return ['success' => true, 'message' => 'User registered successfully.'];
         }
-        return false;
+        return ['success' => false, 'error' => 'database_error', 'message' => 'Failed to save user data.'];
     } catch (PDOException $e) {
         // Log error to PHP error log for debugging
         error_log("PDOException in registerUser: " . $e->getMessage());
-        // Return false after catching exception
-        return false;
+        // Return detailed error info
+        return ['success' => false, 'error' => 'database_exception', 'message' => 'Database error occurred during registration.'];
     }
 }
 
